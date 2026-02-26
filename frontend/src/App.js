@@ -3,11 +3,12 @@ import './App.css';
 
 function App() {
   const [metrics, setMetrics] = useState([]);
-  const [ws, setWs] = useState(null);
 
   useEffect(() => {
-    const newWs = new WebSocket('ws://localhost/ws');
-    setWs(newWs);
+
+
+    const newWs = new WebSocket(`ws://${window.location.host}/ws/telemetry`);
+
 
     newWs.onmessage = (event) => {
       const newMetric = JSON.parse(event.data);

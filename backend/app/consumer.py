@@ -26,8 +26,10 @@ async def start_consumer():
         except KafkaConnectionError:
             logger.warning(f"Failed to connect to Kafka, retrying in {i+1} seconds...")
             await asyncio.sleep(i + 1)
-    
 
+    if not consumer:
+        logger.error("Failed to connect to Kafka after multiple retries. Exiting.")
+        return
 
     try:
         async for msg in consumer:

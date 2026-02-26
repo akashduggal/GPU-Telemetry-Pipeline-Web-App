@@ -17,6 +17,7 @@ app = FastAPI()
 
 origins = [
     "http://localhost:3000",
+    "http://localhost:3001",
     "http://localhost",
 ]
 
@@ -48,7 +49,7 @@ def read_metrics(skip: int = 0, limit: int = 100, db: Session = Depends(get_db))
     metrics = crud.get_gpu_metrics(db, skip=skip, limit=limit)
     return metrics
 
-@app.websocket("/ws")
+@app.websocket("/ws/telemetry")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     await broadcast.publish(channel="gpu_metrics", message=json.dumps({"status": "connected"}))
