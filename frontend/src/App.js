@@ -1,46 +1,130 @@
-import React, { useState, useEffect } from 'react';
-import './App.css';
+
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  Container,
+  Box,
+  Tabs,
+  Tab,
+} from '@mui/material';
+import { Memory as MemoryIcon, Speed as SpeedIcon, Thermostat as ThermostatIcon, Power as PowerIcon, DeveloperBoard as DeveloperBoardIcon } from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
+import Header from './components/Header';
+import LoadingIndicator from './components/LoadingIndicator';
+import GpuCard from './components/GpuCard';
+
+const MAX_DATA_POINTS = 30;
 
 function App() {
-  const [metrics, setMetrics] = useState([]);
+  const [gpuMetrics, setGpuMetrics] = useState({});
+  const [connected, setConnected] = useState(false);
+  const [selectedGpu, setSelectedGpu] = useState(null);
+  const ws = useRef(null);
+  const theme = useTheme();
 
-  useEffect(() => {
+  const handleGpuChange = (event, newValue) => {
+    setSelectedGpu(newValue);
+  };
 
+  const connect = useCallback(() => {
+    if (ws.current) {
+      ws.current.close();
+    }
 
-    const newWs = new WebSocket(`ws://${window.location.host}/ws/telemetry`);
+    const newWs = new WebSocket(`ws://localhost:8000/ws/telemetry`);
+    ws.current = newWs;
 
+    newWs.onopen = () => {
+      console.log('WebSocket connected');
+      setConnected(true);
+    };
 
     newWs.onmessage = (event) => {
       const newMetric = JSON.parse(event.data);
-      setMetrics(prevMetrics => [...prevMetrics, newMetric]);
+      if (newMetric.gpu_id === undefined) {
+        return;
+      }
+      setGpuMetrics(prevMetrics => {
+        if (!selectedGpu) {
+          setSelectedGpu(newMetric.gpu_id);
+        }
+        const gpuId = newMetric.gpu_id;
+        const newGpuData = { ...prevMetrics[gpuId] };
+
+        const metrics = ['temperature', 'power_draw', 'fan_speed', 'memory_usage', 'utilization'];
+
+        metrics.forEach(metric => {
+          if (!newGpuData[metric]) {
+            newGpuData[metric] = [];
+          }
+          newGpuData[metric] = [...newGpuData[metric], { timestamp: newMetric.timestamp, [metric]: newMetric[metric] }].slice(-MAX_DATA_POINTS);
+        });
+
+        return {
+          ...prevMetrics,
+          [gpuId]: newGpuData,
+        };
+      });
     };
 
-    return () => {
-      newWs.close();
+    newWs.onclose = () => {
+      console.log('WebSocket disconnected');
+      setConnected(false);
+    };
+
+    newWs.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      setConnected(false);
     };
   }, []);
 
+  useEffect(() => {
+    connect();
+
+    return () => {
+      if (ws.current) {
+        ws.current.close();
+      }
+    };
+  }, [connect]);
+
+  const metricDetails = {
+    temperature: { label: "Temperature (°C)", color: theme.palette.error.main, icon: <ThermostatIcon sx={{ color: theme.palette.error.main }} /> },
+    power_draw: { label: "Power Draw (W)", color: theme.palette.warning.main, icon: <PowerIcon sx={{ color: theme.palette.warning.main }} /> },
+    fan_speed: { label: "Fan Speed (%)", color: theme.palette.info.main, icon: <SpeedIcon sx={{ color: theme.palette.info.main }} /> },
+    memory_usage: { label: "Memory Usage (%)", color: theme.palette.secondary.main, icon: <MemoryIcon sx={{ color: theme.palette.secondary.main }} /> },
+    utilization: { label: "Utilization (%)", color: theme.palette.primary.main, icon: <DeveloperBoardIcon sx={{ color: theme.palette.primary.main }} /> },
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>GPU Telemetry</h1>
-      </header>
-      <div className="metrics-container">
-        {metrics.map((metric, index) => (
-          <div key={index} className="metric">
-            <p>GPU ID: {metric.gpu_id}</p>
-            <p>Temperature: {metric.temperature}°C</p>
-            <p>Power Draw: {metric.power_draw}W</p>
-            <p>Fan Speed: {metric.fan_speed}%</p>
-            <p>Memory Usage: {metric.memory_usage}%</p>
-            <p>Utilization: {metric.utilization}%</p>
-            <p>Timestamp: {new Date(metric.timestamp).toLocaleTimeString()}</p>
-          </div>
-        ))}
-      </div>
-    </div>
+    <>
+      <Header connected={connected} onReconnect={connect} />
+      <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
+        {Object.keys(gpuMetrics).length === 0 ? (
+          <LoadingIndicator />
+        ) : (
+          <Box sx={{ width: '100%' }}>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+              <Tabs value={selectedGpu} onChange={handleGpuChange} aria-label="GPU selection tabs" centered>
+                {Object.keys(gpuMetrics).map(gpuId => (
+                  <Tab key={gpuId} label={`GPU ${gpuId}`} value={gpuId} />
+                ))}
+              </Tabs>
+            </Box>
+            {selectedGpu && gpuMetrics[selectedGpu] && (
+              <Box sx={{ p: 3 }}>
+                <GpuCard
+                  key={selectedGpu}
+                  gpuId={selectedGpu}
+                  gpuData={gpuMetrics[selectedGpu]}
+                  metricDetails={metricDetails}
+                />
+              </Box>
+            )}
+          </Box>
+        )}
+      </Container>
+    </>
   );
 }
 
 export default App;
-

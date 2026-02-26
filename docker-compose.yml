@@ -1,13 +1,5 @@
 
 services:
-  nginx:
-    build: ./nginx
-    ports:
-      - "80:80"
-    depends_on:
-      - api
-
-
   redis:
     image: redis:6.2-alpine
 
@@ -45,16 +37,23 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: ["CMD-SHELL", "cub kafka-ready -b kafka:9092 1 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   api:
     build: ./backend
+    ports:
+      - "8000:8000"
     deploy:
       replicas: 3
     depends_on:
       db:
         condition: service_healthy
       kafka:
-        condition: service_started
+        condition: service_healthy
     volumes:
       - ./backend:/code
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
@@ -62,20 +61,18 @@ services:
   producer:
     build: ./backend
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     command: python -m app.producer
 
   consumer:
     build: ./backend
     depends_on:
-      - kafka
-      - db
+      kafka:
+        condition: service_healthy
+      db:
+        condition: service_healthy
     command: python -m app.consumer
-
-  frontend:
-    build: ./frontend
-    depends_on:
-      - api
 
 volumes:
   postgres_data:

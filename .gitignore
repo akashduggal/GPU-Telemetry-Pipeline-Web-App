@@ -42,3 +42,5 @@ coverage.xml
 
 # Docker
 docker-compose.override.yml
+
+nvidia_senior_full_stack_systems_engineer.md
