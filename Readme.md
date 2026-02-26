@@ -2,6 +2,8 @@
 
 This project provides a complete, end-to-end solution for monitoring GPU telemetry data in real-time. It features a scalable data pipeline, a persistent storage layer, and a dynamic web-based frontend for visualization. The entire application is containerized using Docker for seamless deployment.
 
+![Web Application Screenshot](web_app_screenshot.png)
+
 ## 🎯 The Problem Statement
 
 In many modern computing environments, such as machine learning clusters, scientific computing grids, or large-scale data centers, multiple GPUs are often running in parallel across different machines. Effectively monitoring the performance and health of these distributed resources is critical for:
@@ -83,6 +85,9 @@ The application is composed of two main parts that need to be run separately: th
     ```bash
     docker-compose up --build -d
     ```
+    After running the command, you should see all the services running successfully in your Docker dashboard or by running `docker ps`:
+
+    ![Docker Services Screenshot](docker_screenshot.png)
 
 2.  **Start the Frontend Application:**
 
