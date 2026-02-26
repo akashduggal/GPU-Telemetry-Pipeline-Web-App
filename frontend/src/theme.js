@@ -23,12 +23,18 @@ const theme = createTheme({
     fontFamily: '"Inter", "Helvetica", "Arial", sans-serif',
     h4: {
       fontWeight: 700,
+      fontSize: '2.125rem',
     },
     h5: {
       fontWeight: 600,
+      fontSize: '1.25rem',
     },
     h6: {
       fontWeight: 500,
+      fontSize: '1.0rem',
+    },
+    body1: {
+      fontSize: '0.875rem',
     },
   },
   components: {

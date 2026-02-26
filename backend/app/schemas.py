@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from datetime import datetime
 
 class GPUMetricBase(BaseModel):
-    gpu_id: int
+    gpu_id: str
     temperature: float
     power_draw: float
     fan_speed: float

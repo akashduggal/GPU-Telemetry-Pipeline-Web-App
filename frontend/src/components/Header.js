@@ -15,8 +15,9 @@ const Header = ({ connected, onReconnect }) => {
   return (
     <AppBar position="sticky" color="default" elevation={0} sx={{ borderBottom: '1px solid', borderColor: 'divider' }}>
       <Toolbar>
+        {/* <ComputerIcon sx={{ mr: 2 }} /> */}
         <Typography variant="h5" component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-          GPU Telemetry Dashboard
+          GPU-Pulse
         </Typography>
         <Typography variant="body2" sx={{ mr: 2, color: connected ? theme.palette.success.main : theme.palette.error.main, fontWeight: 'bold' }}>
           {connected ? 'Connected' : 'Disconnected'}

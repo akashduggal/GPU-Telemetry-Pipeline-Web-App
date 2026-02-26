@@ -44,9 +44,6 @@ function App() {
         return;
       }
       setGpuMetrics(prevMetrics => {
-        if (!selectedGpu) {
-          setSelectedGpu(newMetric.gpu_id);
-        }
         const gpuId = newMetric.gpu_id;
         const newGpuData = { ...prevMetrics[gpuId] };
 
@@ -87,6 +84,12 @@ function App() {
     };
   }, [connect]);
 
+  useEffect(() => {
+    if (!selectedGpu && Object.keys(gpuMetrics).length > 0) {
+      setSelectedGpu(Object.keys(gpuMetrics)[0]);
+    }
+  }, [gpuMetrics, selectedGpu]);
+
   const metricDetails = {
     temperature: { label: "Temperature (°C)", color: theme.palette.error.main, icon: <ThermostatIcon sx={{ color: theme.palette.error.main }} /> },
     power_draw: { label: "Power Draw (W)", color: theme.palette.warning.main, icon: <PowerIcon sx={{ color: theme.palette.warning.main }} /> },
@@ -105,8 +108,8 @@ function App() {
           <Box sx={{ width: '100%' }}>
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
               <Tabs value={selectedGpu} onChange={handleGpuChange} aria-label="GPU selection tabs" centered>
-                {Object.keys(gpuMetrics).map(gpuId => (
-                  <Tab key={gpuId} label={`GPU ${gpuId}`} value={gpuId} />
+                {Object.keys(gpuMetrics).map((gpuId, index) => (
+                  <Tab key={gpuId} label={`GPU ${index + 1}`} value={gpuId} />
                 ))}
               </Tabs>
             </Box>
